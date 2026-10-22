@@ -1,0 +1,67 @@
+name: Publish latest APK
+
+# Click "Run workflow" on this repo's Actions tab to copy the newest APK from
+# the private geder-filter/museAPK repo (release/ folder) into this repo as
+# GederMuse.apk. Download link that always serves the newest version:
+#   https://github.com/geder-filter/FilterableAPK/raw/main/GederMuse.apk
+#
+# Needs one secret on this repo: MUSE_DEPLOY_KEY = private half of a
+# read-only deploy key added to museAPK.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency: publish-apk
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the deploy key secret is set
+        env:
+          MUSE_DEPLOY_KEY: ${{ secrets.MUSE_DEPLOY_KEY }}
+        run: |
+          if [ -z "$MUSE_DEPLOY_KEY" ]; then
+            echo "::error::The MUSE_DEPLOY_KEY secret is missing. Add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - name: Check out this repo
+        uses: actions/checkout@v5
+
+      - name: Check out the private museAPK repo
+        uses: actions/checkout@v5
+        with:
+          repository: geder-filter/museAPK
+          ssh-key: ${{ secrets.MUSE_DEPLOY_KEY }}
+          path: muse
+          persist-credentials: false
+
+      - name: Copy the newest APK as GederMuse.apk
+        run: |
+          shopt -s nullglob
+          apks=(muse/release/*.apk)
+          if [ ${#apks[@]} -eq 0 ]; then
+            echo "::error::No APK found in museAPK/release/"
+            exit 1
+          fi
+          latest=$(printf '%s\n' "${apks[@]}" | sort -V | tail -n 1)
+          echo "Newest APK: $(basename "$latest")"
+          cp "$latest" GederMuse.apk
+          echo "LATEST=$(basename "$latest")" >> "$GITHUB_ENV"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add GederMuse.apk
+          if git diff --cached --quiet; then
+            echo "GederMuse.apk is already $LATEST, nothing to publish." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git commit -m "Publish $LATEST"
+          git push
+          echo "Published **$LATEST** as [GederMuse.apk](https://github.com/geder-filter/FilterableAPK/raw/main/GederMuse.apk)" >> "$GITHUB_STEP_SUMMARY"
