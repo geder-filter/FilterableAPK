@@ -1,0 +1,26 @@
+{
+ "version": 2,
+ "build": "geder-ai-filter 1.0.31",
+ "files": [
+  {
+   "path": "reveal.js",
+   "world": "isolated",
+   "sha256": "dec8c829e6619282171d95456500b7b2c671de27e99bb9d0e711f0647943caae"
+  },
+  {
+   "path": "wa-config.js",
+   "world": "main",
+   "sha256": "1adb8505a1a6e8814e53e9596343860289efc89038705e216b542dd477312afa"
+  },
+  {
+   "path": "wa-js.js",
+   "world": "main",
+   "sha256": "149a8e4b022844c977e596dab7048e3a7d7f99f545ff94aae96580265872725d"
+  },
+  {
+   "path": "setup-flow.js",
+   "world": "main",
+   "sha256": "a4e6d06736c65d22041ec0d91c051061583a210a36cf2c11bfc039c99997622d"
+  }
+ ]
+}
